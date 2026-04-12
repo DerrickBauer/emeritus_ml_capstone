@@ -2,9 +2,13 @@
 
 ## Project Overview
 What is an accurate market value for a european soccer player given stats like goals, assists, minutes played, etc?
+
 **Data Source:** [European Top Leagues Player Stats 25-26 (Kaggle)](https://www.kaggle.com/datasets/kaanyorgun/european-top-leagues-player-stats-25-26) 
+
 **Techniques:** Regression Modeling, Scaling, Encoding, Grid Search over multiple hyperparameters to find the most optimal choices. Ridge/Lasso regression. Feature Engineering. 
+
 **Expected Results:** Per-position modeling will be the most accurate. League and goal-related features will affect market value the most for offensive players. Saves and interceptions will affect market value for defensive players more. The number of cards received and tackles will affect all players the least.
+
 **Why:** Modeling can be used to determine if a player is being under or over valued. This can influence salary decisions which will maximize the team's expected performance while still meeting salary cap requirements.
 
 ## Data
@@ -41,7 +45,7 @@ What is an accurate market value for a european soccer player given stats like g
 - Converted many features to per-90-minute values to help distinguish players who have higher stats simply because they have played longer.
 - Removed outliers in `log_market_value` using IQR method
 
-[Log Market Value Distribution]('images/log_market_value_distribution.png')
+![Log Market Value Distribution](images/log_market_value_distribution.png)
 
 ## Features Used
 | Feature | Type |
