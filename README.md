@@ -158,7 +158,7 @@ An audit was performed of the most inaccurately predicted market values (both lo
 | Ousmane Diomande | D | Liga Portugal | 22 | 48.0M | 2.1M | -95.6% |
 | João Simões | M | Liga Portugal | 19 | 15.9M | 865K | -94.6% |
 | Anatoliy Trubin | G | Liga Portugal | 24 | 30.0M | 1.8M | -94.1% |
-| Thiago Pitarch | M | LaLiga | N/A | 18.2M | 1.1M | -94.1% |
+| Thiago Pitarch | M | LaLiga | 18 | 18.2M | 1.1M | -94.1% |
 | Josip Šutalo | D | Eredivisie | 26 | 16.4M | 1.0M | -93.9% |
 | Givairo Read | D | Eredivisie | 19 | 24.0M | 1.5M | -93.8% |
 | Zeno Debast | D | Liga Portugal | 22 | 31.0M | 2.1M | -93.2% |
