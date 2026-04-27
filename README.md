@@ -10,8 +10,8 @@ Our regression model achieved an R^2 of 0.648 with XGBoost performing the best. 
 
 Feature importance analysis shows that league membership and age are dominant factors, with on-field performance having a lesser impact.  Given that our data set includes comprehensive performance features, we can infer that players whose actual market value significantly differs from their model predicted value are likely priced more heavily on non-performance factors outside of our data set than on factors that would directly affect the outcome of a game.  This is particularly true for players on both the lower and upper end of the age spectrum, where our model shows market value is disproportionately influenced.
 
-[Modeling Notebook]()"futbol_player_market_value.ipynb")
-[Age Data Retrieval Notebook]()"build_player_age_data.ipynb")
+[Modeling Notebook]("futbol_player_market_value.ipynb")
+[Age Data Retrieval Notebook]("build_player_age_data.ipynb")
 
 ## Data
 A data set was procured from Kaggle containing on-field player statistics, league, and Transfermarkt market values.  This data was then augmented with player age gathered from Wikipedia.  
