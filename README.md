@@ -1,41 +1,52 @@
-# European Soccer Player Market Value Prediction
+# European Soccer Player Market Value
 
 ## Project Overview
-What is an accurate market value for a european soccer player given stats like goals, assists, minutes played, etc?
+Transfermarkt market values for European soccer players are calculated based on multiple on-field factors of performance statistics as well as off-field factors like advertising value, reputation, and existing contract length.  A performance-focused team that scouts for players whose market value is weighted heavily by off-field factors could improve the efficency of their salary pool by targeting players that are undervalued and avoiding players that are overvalued. Can we model player market value well enough to identify players whose market values are disproportionately driven by off-field factors?
 
-**Data Source:** [European Top Leagues Player Stats 25-26 (Kaggle)](https://www.kaggle.com/datasets/kaanyorgun/european-top-leagues-player-stats-25-26) 
+See: [Transfermarkt Market Value explained - How is it determined?](https://www.transfermarkt.co.in/transfermarkt-market-value-explained-how-is-it-determined-/view/news/385100)
 
-**Techniques:** Regression Modeling, Scaling, Encoding, Grid Search over multiple hyperparameters to find the most optimal choices. Ridge/Lasso regression. Feature Engineering. 
+## Summary of Findings
+Our regression model achieved an R^2 of 0.648 with XGBoost performing the best.  This means that our data set of performance statistics, position, age, and league together explain approximately 65% of the variance in Transfermarkt player market values.  The remaining 35% can be attributed to other off-field features not present in our data set as well as noise and modeling imperfections.  
 
-**Expected Results:** Per-position modeling will be the most accurate. League and goal-related features will affect market value the most for offensive players. Saves and interceptions will affect market value for defensive players more. The number of cards received and tackles will affect all players the least.
+Feature importance analysis shows that league membership and age are dominant factors, with on-field performance having a lesser impact.  Given that our data set includes comprehensive performance features, we can infer that players whose actual market value significantly differs from their model predicted value are likely priced more heavily on non-performance factors outside of our data set than on factors that would directly affect the outcome of a game.  This is particularly true for players on both the lower and upper end of the age spectrum, where our model shows market value is disproportionately influenced.
 
-**Why:** Modeling can be used to determine if a player is being under or over valued. This can influence salary decisions which will maximize the team's expected performance while still meeting salary cap requirements.
+[Modeling Notebook]()"futbol_player_market_value.ipynb")
+[Age Data Retrieval Notebook]()"build_player_age_data.ipynb")
 
 ## Data
- - player_id  
- - name
- - league_x    
- - position    
- - **market_value** (Target Variable)
- - league_y   
- - appearances  
- - matches_started  
- - minutes_played  
- - goals  
- - assists  
- - expected_goals
- - expected_assists
- - rating
- - total_shots  
- - shots_on_target  
- - yellow_cards  
- - red_cards  
- - tackles  
- - interceptions  
- - saves  
+A data set was procured from Kaggle containing on-field player statistics, league, and Transfermarkt market values.  This data was then augmented with player age gathered from Wikipedia.  
+
+**Data Sources:** 
+ - [European Top Leagues Player Stats 25-26 (Kaggle)](https://www.kaggle.com/datasets/kaanyorgun/european-top-leagues-player-stats-25-26)
+   - Market Value from [Transfermarkt](https://www.transfermarkt.com/)
+   - Performance metrics from [Sofascore](https://www.sofascore.com/)
+ - [Wikipedia](https://www.wikipedia.com)
+
+**Data**
+ - **Market Value** (Target Variable)
+ - Id  
+ - Name
+ - Age
+ - League
+ - Position    
+ - Appearances  
+ - Matches Started  
+ - Minutes Played  
+ - Goals  
+ - Assists  
+ - Expected_goals
+ - Expected_assists
+ - Rating
+ - Total Shots  
+ - Shots on Target  
+ - Yellow Cards  
+ - Red Cards  
+ - Tackles  
+ - Interceptions  
+ - Saves  
 
 ## Data Preparation and Feature Engineering
-- Merged two input datasets base on a shared `player_id` column
+- Merged two input datasets based on a shared `player_id` column
 - Dropped unneeded column (`name`)
 - Filled missing `expected_goals` and `expected_assists` values with per-position medians
 - Filtered out players with less than 270 minutes played to reduce noise
@@ -44,6 +55,7 @@ What is an accurate market value for a european soccer player given stats like g
 - Introduced new model target (`log_market_value`) to account for skewed `market_value` data
 - Converted many features to per-90-minute values to help distinguish players who have higher stats simply because they have played longer.
 - Removed outliers in `log_market_value` using IQR method
+- Downloaded `date_of_birth` for all players by name and added `age` and `age_squared` features.
 
 ![Log Market Value Distribution](images/log_market_value_distribution.png)
 
@@ -64,9 +76,11 @@ What is an accurate market value for a european soccer player given stats like g
 | `yellow_cards_per90` | Numeric |
 | `red_cards_per90` | Numeric |
 | `saves_cards_per90` | Numeric |
+| `age` | Numeric |
+| `age_squared` | Numeric |
 
-## Modeling
-Ridge, Lasso, XGBoost, and Random Forest were each used with GridSearchCV for hyperparameter tuning.  Both a global model including all positions and per-position models were created.  Model performance results are below (values in Euros).
+## Modeling without Age
+Ridge, Lasso, XGBoost, and Random Forest were each used with GridSearchCV for hyperparameter tuning.  Both a global model including all positions and per-position models were created.  R^2 was chosen as the evaluation metric as it measures the variance in player market value that is explained by the model and more directly answers the core project objective.  Model performance results are below (values in Euros).
 
 ### Global Model (3054 players)
 | Model | R^2 | MAE | RMSE |
@@ -80,7 +94,7 @@ Ridge, Lasso, XGBoost, and Random Forest were each used with GridSearchCV for hy
 
 | Model | R^2 | MAE | RMSE |
 |---|---|---|---|
-| Lasso | 0.516 | 7,7M | 19.8M |
+| Lasso | 0.516 | 7.7M | 19.8M |
 | Ridge | 0.516 | 7.7M | 19.8M |
 | XGBoost | 0.499 | 8.1M | 20.7M |
 
@@ -108,7 +122,7 @@ Ridge, Lasso, XGBoost, and Random Forest were each used with GridSearchCV for hy
 | Ridge | 0.346 | 3.8M | 6.8M |
 | XGBoost | 0.367 | 4.9M | 8.2M |
 
-The global model outperformed per-league models with the exception of midfielders.  The goalkeepers model degraded significantly due to the small sample size. 
+The global model outperformed per-position models with the exception of midfielders.  The goalkeepers model degraded significantly due to the small sample size.  The global model was selected for final analysis as it outperformed per-position models in most cases and benefited from the full training dataset.
 
 ### Most Important Features (Lasso Coefficients by Magnitude)
 
@@ -116,22 +130,18 @@ The global model outperformed per-league models with the exception of midfielder
 |---|---|
 | league_Eredivisie | -1.35 |
 | league_Premier League | +1.31 |
-| red_cars_per90 | +1.24 |
+| red_cards_per90 | +1.24 |
 | position_G | +1.13 |
 | league_Liga Portugal | -1.11 |
 | league_Super Lig | -1.09 |
 
 League membership in either Eredivisie, Premier, Liga Portugal, or Super Lig are high predictors of market value.  Red cards per 90 indicates aggressive players are valued more and goalkeepers are also valued highly.
 
-## Analysis
-
-Overall, our models do not perform well, suggesting that we are missing data that is required to accurately model market value.  Our data set, mostly performance-related statistics, explains only about 52% of market value variance.
-
-## Audit
+### Audit
 
 An audit was performed of the most inaccurately predicted market values (both low and high) to analyze patterns.  Ages of these players was then manually researched and added to the following tables.
 
-### Most Undervalued Players (model predicts higher than actual)
+#### Most Undervalued Players (model predicts higher than actual)
 
 | Player | Position | League | Age | Actual Value | Predicted Value | % Difference |
 |---|---|---|---|---|---|---|
@@ -151,7 +161,7 @@ An audit was performed of the most inaccurately predicted market values (both lo
 | Mahamadou Nagida | D | Ligue 1 | 20 | 145K | 3.0M | +1957.6% |
 | Veysel Sarı | D | Super Lig | 37 | 97K | 1.8M | +1790.6% |
 
-### Most Overvalued Players (model predicts lower than actual)
+#### Most Overvalued Players (model predicts lower than actual)
 
 | Player | Position | League | Age | Actual Value | Predicted Value | % Difference |
 |---|---|---|---|---|---|---|
@@ -171,9 +181,57 @@ An audit was performed of the most inaccurately predicted market values (both lo
 | Achraf Hakimi | D | Ligue 1 | 27 | 82.0M | 6.1M | -92.5% |
 | Sacha Boey | D | Super Lig | 25 | 13.9M | 1.1M | -92.4% |
 
-From the audit, we can see a larger driver of the modeling innacuracies is age of the player. The Undervalued Players table mainly contains players aged 34 to 42.  These older players are at the end of their careers and thus have a lower market value becuase their performance is expected to degrade or they will retire soon.  The Overvalued Players table contains entirely players less than 28 years old.  These are players with high established performance and many years left in their careers, thus increasing their value.  This finding is corroborated from the Transfermarkt research website, which contains stat on Soccer players.  Their article [Transfermarkt Market Value explained - How is it determined?](https://www.transfermarkt.co.in/transfermarkt-market-value-explained-how-is-it-determined-/view/news/385100) lists the top two most important factors are future prospects and age.  
+From the audit, we can see a larger driver of the modeling innacuracies is age of the player. The Undervalued Players table mainly contains players aged 34 to 42.  These older players are at the end of their careers and thus have a lower market value because their performance is expected to degrade or they will retire soon.  The Overvalued Players table contains entirely players less than 28 years old.  These are players with high established performance and many years left in their careers, thus increasing their value.  
 
-## Future Improvements
-- Add age data to the feature set, which will improve modeling accurracy
-- Use more advanced modeling techniques such as neural networks
-- Collect more data and re-assess per-position modeling
+## Modeling with Age
+
+Player dates of birth were gathered from Wikipedia entries and new features of `age` and `age_squared` were introduced.  The global modeling was then refit with the additional data with the following results:
+
+| Model | R^2 | MAE | RMSE |
+|---|---|---|---|
+| Lasso | 0.641 | 6.5M | 13.7M |
+| Ridge | 0.641 | 6.5M | 13.7M |
+| XGBoost | 0.648 | 6.4M | 13.6M |
+| Random Forest | 0.618 | 6.5M | 14.5M |
+
+As we predicted, age is a significant factor in a player's salary.  Including the age raised our best model performance by an R^2 of 0.130 up to 0.648.
+
+![Most Impactful Player Features](images/feature_importance.png)
+
+### Breakdown of Feature Impact
+
+**Age -** Looking at the features ranked by impact, we see just how much player age impacts market value.  Interestingly, the square of age is a large negative impact while the age itself is a large positive impact.  This indicates a U-shape to the data where both relatively old and relatively young players are valued much less while players in the middle of their careers are valued more.  
+
+**Position -** Goalies are highly valued, but other positions have a much smaller impact on market value, with defenders having no impact.  Also interesting is that saves per 90 has a relatively large negative impact while goalies have a high positive impact.  This may be because a large number of saves indicates many shots-on-goal from the opposing team and therefore the player is on a weaker team, and thus has a lower market value.  This implies that goalies with a large number of saves, and are thus highly-performing, are actually undervalued.  
+
+**Rating -** Player rating, a comprehensive value of a player's performance, has only a moderate impact.  This, more than anything else, reinforces just how little player performance impacts market value.
+
+**Minutes Played -** Minutes played also has a moderate positive impact as players with more experience are more valued.
+
+**Per 90 -** Red cards per 90 has a large positive impact, suggesting that aggressive players are highly valued.  Saves per 90 has a large negative impact, as discussed above.  The other per 90 performance features had very little impact on player market value.  This may be because of their moderate correlation with rating.
+
+**League -** The impact of league follows exactly what we would expect given the league rankings.  Premier league is a the top, and has the highest positive impact on market value.  Eredivisie is at the bottom and has the largest negative impact.  The other leagues contribute based on their position in the ranking as well.
+
+The remaining variance can be attributed to other off-field factors that did not exist in the data set.
+
+## Conclusion
+
+The market value of players is driven more by non-performance factors such as age and league than by the on-field performance factors that affect the outcome of a game.  Our model, which was trained with on-field performance factors, explains 65% of market value variance.  The remaining 35% can be attributed to off-field, non-performance factors like advertising value, reputation, and existing contract length.  The model's difference between predicted and actual market value is a signal of how heavily players' market values are influenced by these non-performance factors.  It is therefore a useful screening tool to identify players that warrant further investigation for clubs looking to make performance-focused recruiting decisions.  Players whose predicted value significantly exceeds their actual market value, particularly those at the ends of the age spectrum, are the strongest candidates for further investigation to identify undervalued players.
+
+### Players to Investigate
+
+With the conclusion above, we can search our data set for players that we should target for further investigation.  These players should have a high rating, indicating that they have good on-field performance.  They should also be on the upper or lower end of the age spectrum, which we know from our modeling are under-valued players.  Finally, they should have a relatively large difference in actual vs predicted market value, which we've concluded means their value is impacted by off-field factors not in our data set.
+
+| Name | Position | League | Age | Rating | Actual Value | Predicted Value | % Difference |
+|---|---|---|---|---|---|---|---|
+| Lionel M'Pasi | G | Ligue 1 | 32 | 7.83 | 370K | 630K | +70.4% |
+| Yan Diomande | F | Bundesliga | 20 | 7.69 | 49.0M | 61.4M | +25.3% |
+| Rémy Descamps | G | Ligue 1 | 30 | 7.66 | 1.9M | 4.6M | +144.4% |
+| Luka Modrić | M | Serie A | 41 | 7.57 | 4.4M | 6.9M | +57.0% |
+| Ronald Koeman Jr | G | Eredivisie | 31 | 7.50 | 595K | 1.3M | +111.6% |
+| Nicolás Otamendi | D | Liga Portugal | 38 | 7.48 | 1.1M | 1.6M | +44.6% |
+
+### Next Steps
+
+- Per-position modeling may have been hindered by the low amounts of training data.  Collect more data and re-assess per-position modeling.
+- Collect data on off-field characteristics to identify the most important off-field drivers of market value.
